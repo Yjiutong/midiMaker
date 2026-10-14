@@ -56,6 +56,7 @@ python scripts/separate_stems.py  input.mp3  --out stems/
 
 # 2. 提取全局特征 → features.json
 python scripts/extract_features.py  input.mp3  --stems stems/  --out features.json
+# 虚拟歌姬歌曲可追加 --virtual-singer 写入特化特征
 
 # 3. 各 stem 转 MIDI + 鼓分类 → midi_raw/（默认 AutoTranscriber 风格 CQT 引擎）
 python scripts/transcribe_stems.py  stems/  --out midi_raw/ --engine cqt
@@ -72,7 +73,7 @@ python scripts/style_report.py  features.json  midi/  --out STYLE_REPORT.md \
        [--fingerprint AUTHOR_FINGERPRINT.json]
 
 # 7. 人声参考包（SV 专用）
-python scripts/vocal_track_sv.py  stems/vocals.wav  --out vocal/
+python scripts/vocal_track_sv.py  stems/vocals.wav  --out vocal/ --virtual-singer
 
 # 8. 合并多轨 MIDI + FL Studio 导入说明
 python scripts/package_output.py  midi/  vocal/vocal_melody.mid  \
@@ -140,6 +141,8 @@ output/
 - `midi_mapping.md` —— GM 鼓键映射 + MIDI 通道分配规范。
 
 - `transcription_algorithms.md` —— 转录算法参考（**AutoTranscriber** CQT 管线 / 人声分离两层架构 / 符号域分层 / Basic Pitch / gityag）。
+
+- `virtual_singer_spec.md` —— 虚拟歌姬歌曲特化：合成人声规律、CLI 开关、样本说明。
 
 ## 脚本清单（scripts/）
 

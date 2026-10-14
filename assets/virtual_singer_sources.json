@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": "utau-seiren-daisy-bell",
+      "name": "Seiren - Daisy Bell (UTAU demo)",
+      "file": "utau_seiren_daisy_bell.wav",
+      "url": "https://raw.githubusercontent.com/Mitxoleta/utau-assets/main/Seiren/Daisy%20Bell.wav",
+      "kind": "utau-demo",
+      "license": "MIT / public demo repository",
+      "notes": "单段 UTAU 虚拟歌姬 demo，Daisy Bell 为公共领域旋律，适合做人声轨特化测试。"
+    }
+  ]
+}

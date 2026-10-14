@@ -408,6 +408,8 @@ def main():
                     help="转录引擎: cqt(AutoTranscriber 风格) / basicpitch")
     ap.add_argument("--n-peaks", type=int, default=5,
                     help="每帧最大同时音符数(贝斯设1-2,和弦设5-8)")
+    ap.add_argument("--virtual-singer", action="store_true",
+                    help="虚拟歌姬歌曲特化：人声使用 full/细粒度 CREPE 模型")
     args = ap.parse_args()
 
     sd = Path(args.stems)
@@ -460,9 +462,12 @@ def main():
     # 人声主旋律音高线（CREPE / pyin）
     vocals_wav = sd / "vocals.wav"
     if vocals_wav.exists():
-        vnotes = estimate_vocal_pitch(str(vocals_wav))
+        vnotes = estimate_vocal_pitch(
+            str(vocals_wav),
+            model="full" if args.virtual_singer else "tiny",)
         notes_to_midi(vnotes, program=0).write(str(out / "vocals_melody.mid"))
-        print(f"[transcribe] vocals_melody.mid 完成（{len(vnotes)} 个音高事件，仅供 SV 参考）")
+        mode = "virtual-singer" if args.virtual_singer else "default"
+        print(f"[transcribe] vocals_melody.mid 完成（{mode}，{len(vnotes)} 个音高事件，仅供 SV 参考）")
 
     print(f"\n输出目录: {out}")
 
