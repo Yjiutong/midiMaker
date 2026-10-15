@@ -73,3 +73,39 @@
 - **偏离**：明显超出区间或不属于惯用类别 → 标注「偏离：差异点…」（如「本曲 BPM 150 高于作者常用 118–128」）。
 
 这让用户快速判断：这首是作者「典型作」还是「实验/跨界作」，从而决定编曲参考的权重。
+
+## 五、基于指纹生成原创分轨 MIDI（compose_from_fingerprint.py）
+
+除了回查，指纹也可以直接作为编曲生成器输入：`compose_from_fingerprint.py` 读取指纹中的调性、BPM、典型进行、段落比例和层次信息，生成原创的 `melody / pad / bass / drums` 分轨 MIDI。
+
+```bash
+python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
+    --out output/compose/ --name new_song --bars 32 --seed 42
+```
+
+也可以只用单曲 `features.json` 试写：
+
+```bash
+python scripts/compose_from_fingerprint.py --features features.json \
+    --out output/compose/ --name demo --bars 16 --seed 7
+```
+
+支持覆盖参数：
+
+```bash
+python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
+    --key A --scale minor --bpm 125 --bars 24
+```
+
+agent 接入后还可以把用户口语化提示传给 `--prompt`，或先解析成 `params.json` 再通过 `--params` 传入。可用参数和常见映射见 `style_prompt_guide.md`。
+
+输出约定：
+
+- `melody.mid`：主旋律，按段落调整音区和密度
+- `pad.mid`：和弦铺底，按指纹中的进行逐小节轮转
+- `bass.mid`：根音贝斯线，前奏/尾奏稀疏
+- `drums.mid`：鼓组草稿，前奏/尾奏降低密度
+- `notes.json`：与 MIDI 一并对齐的音符元数据
+- `COMPOSE_REPORT.md`：生成摘要，可给非多模态模型快速阅读
+
+> 这是规则式编曲草稿，不是转录结果；它会复现作者常用语言，但不会复现任何一首具体歌曲。生成后仍需要按听感人工细化。

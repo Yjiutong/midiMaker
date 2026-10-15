@@ -13,7 +13,7 @@ description: 将给定 MP3 拆解为编曲元素多轨 MIDI 并分析音乐风�
 
 - **单首拆析模式**：一首歌 → 多轨 MIDI + 风格报告 + 乐器类型 + 人声包。
 
-- **作者风格指纹模式**：多首同作者参考曲 → 提炼 `AUTHOR_FINGERPRINT.json`，后续单首拆析回查对照，标注「符合 / 偏离作者惯例」。
+- **作者风格指纹模式**：多首同作者参考曲 → 提炼 `AUTHOR_FINGERPRINT.json`，后续单首拆析回查对照，标注「符合 / 偏离作者惯例」，也可基于指纹生成新的分轨 MIDI 草稿。
 
 ## 工作模式决策树
 
@@ -23,6 +23,7 @@ description: 将给定 MP3 拆解为编曲元素多轨 MIDI 并分析音乐风�
 └─ 同一作者多首参考曲  → 作者风格指纹模式
    ├─ 只想要指纹        → 仅运行 build_fingerprint.py
    └─ 想要指纹 + 拆新曲 → 先 build_fingerprint.py，再对目标曲跑单首流程并传入指纹
+   └─ 想要原创编曲草稿  → build_fingerprint.py 后运行 compose_from_fingerprint.py
 ```
 
 ## 环境依赖
@@ -106,6 +107,45 @@ python scripts/build_fingerprint.py  features1.json features2.json ... \
 指纹包含：常用调 / 典型和弦进行 / BPM 区间 / 固定配器搭配 / 段落比例 / 音色亮度区间。  
   单首拆析时把 `--fingerprint` 传给 `style_report.py`，报告会标注该曲「符合 / 偏离」作者惯例。
 
+## 基于指纹生成风格化 MIDI（原创分轨）
+
+当用户想按某作者的风格写一首新编曲，而不是继续扒带时，运行：
+
+```bash
+python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
+    --out output/compose/ --name new_song --bars 32 --seed 42
+```
+
+输出分轨：
+
+- `melody.mid`：主旋律草稿，按段落调整音区与密度
+- `pad.mid`：和弦铺底，逐小节轮转指纹中的和弦进行
+- `bass.mid`：根音贝斯线，前奏/尾奏自动稀疏
+- `drums.mid`：鼓组草稿，按前奏/尾奏降密度
+- `notes.json`：与分轨一一对应的音符元数据
+- `COMPOSE_REPORT.md`：调性、BPM、和弦进行、段落配比摘要
+
+该模式不读取音频，不保证还原某首歌；它是把作者指纹翻译成可编辑的原创 MIDI 草稿，适合先搭结构再交由人工完善。
+
+### Agent 提示词微调风格参数
+
+接入 agent 后，可用自然语言微调风格参数。最简单的方式是把用户提示词直接传给 `--prompt`：
+
+```bash
+python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
+    --prompt "更明亮、鼓更密、快一点" \
+    --out output/compose/ --name new_song --bars 32 --seed 42
+```
+
+如果 agent 已经理解提示词，也可以解析成 `params.json` 再传入：
+
+```bash
+python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
+    --params params.json --out output/compose/
+```
+
+支持参数包括 `bpm / bpm_shift / bars / key / scale / density / brightness / pad_density / melody_density / bass_density / drums / progression / section_ratio / seed`。完整提示词到参数的映射见 `references/style_prompt_guide.md`。
+
 ## 输出目录结构
 
 ```
@@ -162,6 +202,8 @@ output/
 
 - `virtual_singer_spec.md` —— 虚拟歌姬歌曲特化：合成人声规律、CLI 开关、样本说明。
 
+- `style_prompt_guide.md` —— agent 接入后，把用户提示词翻译成风格参数的映射表。
+
 ## 脚本清单（scripts/）
 
 | 脚本 | 作用 |
@@ -178,6 +220,7 @@ output/
 | `notes_json.py` / `notes_io.py` | 生成/读写每轨 `notes.json`（起止/音高/力度/置信度） |
 | `vocal_track_sv.py` | SV 人声参考包（音高线 + 歌词占位 + 声库类型） |
 | `build_fingerprint.py` | 多首聚合 → AUTHOR_FINGERPRINT.json |
+| `compose_from_fingerprint.py` | 指纹 → 原创 melody/pad/bass/drums 多轨 MIDI；支持 `--prompt` 或 `--params` 微调风格参数 |
 | `package_output.py` | 合并多轨 MIDI + FL Studio 导入说明 |
 | `install_skill_deps.py` / `skill_runtime.py` | 内置依赖安装与运行时路径 |
 

@@ -18,6 +18,7 @@
 - 逐轨 `notes.json`：起止时间、音高、力度、置信度
 - 段落摘要与音频叙事：和弦、鼓型、织体、频谱、音色
 - 作者风格指纹：多首参考曲聚合
+- 风格化 MIDI 生成：基于作者指纹生成原创 melody / pad / bass / drums 分轨
 - 虚拟歌姬特化：人声音高线、音节密度、SV 参考包
 
 ## 目录结构
@@ -36,6 +37,7 @@
 │   ├── timbre_analysis.py      # 音色分析报告
 │   ├── vocal_track_sv.py       # Synthesizer V 人声参考包
 │   ├── build_fingerprint.py    # 作者风格指纹
+│   ├── compose_from_fingerprint.py # 指纹 -> 原创多轨 MIDI
 │   ├── package_output.py       # 合并多轨 MIDI
 │   ├── notes_io.py             # notes.json 读写
 │   ├── notes_json.py           # 从 MIDI 目录生成 notes.json
@@ -52,6 +54,7 @@
 │   ├── midi_mapping.md
 │   ├── sv_voicebank.md
 │   ├── fingerprint_framework.md
+│   ├── style_prompt_guide.md
 │   ├── virtual_singer_spec.md
 │   └── music-style-deconstructor_design.md
 └── requirements/
@@ -113,7 +116,20 @@ python scripts/vocal_track_sv.py stems/vocals.wav --out vocal/
 # 10. 合并输出
 python scripts/package_output.py midi/ vocal/vocal_melody.mid \
     --map INSTRUMENT_MAP.md --out output/ --name mysong
+
+# 11. （可选）基于作者风格指纹生成一首新的分轨 MIDI 草稿
+python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
+    --out output/compose/ --name new_song --bars 32 --seed 42
+
+# 也可以用提示词微调风格参数（适合 agent 接入口语化指令）
+python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
+    --prompt "更明亮、鼓更密、快一点" \
+    --out output/compose/ --name new_song --bars 32 --seed 42
 ```
+
+生成的 `output/compose/` 包含 `melody.mid`、`pad.mid`、`bass.mid`、`drums.mid`、`notes.json` 和 `COMPOSE_REPORT.md`，可以直接拖入 FL Studio 继续编曲。该过程不读取音频，而是用指纹中的调性、BPM、和弦进行、段落比例和层次比例生成原创编曲草稿。
+
+`--prompt` 支持常见中文/英文风格词，如快慢、明亮/暗沉、鼓密/少鼓、Pad 多少；agent 也可以把提示词解析成 `params.json` 用 `--params` 传入，参数映射见 `references/style_prompt_guide.md`。
 
 ## 虚拟歌姬特化
 
