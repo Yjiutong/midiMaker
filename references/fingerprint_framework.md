@@ -97,7 +97,7 @@ python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
     --key A --scale minor --bpm 125 --bars 24
 ```
 
-agent 接入后还可以把用户口语化提示传给 `--prompt`，或先解析成 `params.json` 再通过 `--params` 传入。可用参数和常见映射见 `style_prompt_guide.md`。
+agent 接入后还可以把用户口语化提示规范成标准 prompt，通过 `--prompt-file` 传入；或先解析成 `params.json` 再通过 `--params` 传入。可用参数、标准 prompt 模板和常见映射见 `style_prompt_guide.md`。
 
 输出约定：
 

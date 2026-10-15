@@ -2,11 +2,48 @@
 
 本文用于 agent 在接入 `music-style-deconstructor` 后，把用户自然语言的编曲偏好翻译成 `compose_from_fingerprint.py` 可用的参数。
 
+## Agent 规范化流程
+
+1. 接收用户自然语言，例如“更明亮、鼓更密、副歌更高、前奏安静”。
+2. 去除模糊或矛盾表达，整理为标准 prompt（见下）。
+3. 把标准 prompt 写入 `STYLE_PROMPT.md`，或直接解析为 `params.json`。
+4. 调用 `compose_from_fingerprint.py --prompt-file STYLE_PROMPT.md` 或 `--params params.json`。
+5. 读取 `COMPOSE_REPORT.md` 回给用户，根据下一轮自然语言继续迭代。
+
+## 标准 Prompt 模板
+
+```markdown
+# 风格方向
+明亮 / 暗沉 / 中性
+
+# 速度
+比指纹快一点 / 保持原速 / 比指纹慢一点
+
+# 配器强调
+鼓：密 / 普通 / 稀疏
+Pad：多 / 正常 / 少
+贝斯：紧凑 / 正常
+
+# 段落处理
+Intro：安静
+Chorus：更高、更密
+Outro：收束
+```
+
+标准 prompt 必须避免同时出现互相矛盾的词；例如“前奏安静”不能写成“整体很安静”，否则会同时触发慢速和低密度。
+
 ## 调用方式
 
 1. 让用户提供作者指纹或 `features.json`，例如 `AUTHOR_FINGERPRINT.json`。
-2. 理解用户提示词，例如“更明亮、鼓更密、副歌高点”。
-3. 直接调用：
+2. 如果是 agent 已规范化的标准 prompt 文件，用 `--prompt-file` 传入：
+
+```bash
+python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
+    --prompt-file STYLE_PROMPT.md \
+    --out output/compose/ --name new_song --bars 32 --seed 42
+```
+
+3. 如果提示词较短且明确，也可以直接传给 `--prompt`：
 
 ```bash
 python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
@@ -14,7 +51,7 @@ python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
     --out output/compose/ --name new_song --bars 32 --seed 42
 ```
 
-4. 如果提示词比较复杂，agent 可以先把其解析成 `params.json`，再用 `--params` 传入：
+4. 如果提示词比较复杂，agent 可以先解析成 `params.json`，再用 `--params` 传入：
 
 ```bash
 python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \

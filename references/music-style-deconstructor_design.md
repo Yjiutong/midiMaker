@@ -136,7 +136,7 @@ description: 将给定 MP3 拆解为编曲元素多轨 MIDI 并分析音乐风�
 - 主旋律根据段落调整音区和密度；前奏/尾奏自动降低鼓与贝斯密度。
 - 输出 `notes.json` 与 `COMPOSE_REPORT.md`，让非多模态模型无需读 MIDI 也能读取音符和段落摘要。
 - 支持 `--key / --scale / --bpm / --bars / --seed` 覆盖，便于生成多版草稿。
-- 支持 `--prompt` 自然语言微调和 `--params params.json` 结构化覆盖；参数映射见 `style_prompt_guide.md`。
+- 支持 `--prompt` 自然语言微调、`--prompt-file` 标准 prompt 文件、`--params params.json` 结构化覆盖；参数映射见 `style_prompt_guide.md`。
 
 该模块属于规则式编曲草稿，不读音频、不复现具体歌曲；目的是在作者语言边界内快速生成可编辑的多轨 MIDI 起点。
 

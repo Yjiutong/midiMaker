@@ -125,11 +125,16 @@ python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
 python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
     --prompt "更明亮、鼓更密、快一点" \
     --out output/compose/ --name new_song --bars 32 --seed 42
+
+# agent 也可以先规范成标准 prompt 文件，再输入后续流程
+python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
+    --prompt-file STYLE_PROMPT.md \
+    --out output/compose/ --name new_song --bars 32 --seed 42
 ```
 
-生成的 `output/compose/` 包含 `melody.mid`、`pad.mid`、`bass.mid`、`drums.mid`、`notes.json` 和 `COMPOSE_REPORT.md`，可以直接拖入 FL Studio 继续编曲。该过程不读取音频，而是用指纹中的调性、BPM、和弦进行、段落比例和层次比例生成原创编曲草稿。
+生成的 `output/compose/` 包含 `melody.mid`、`pad.mid`、`bass.mid`、`drums.mid`、`notes.json`、`COMPOSE_REPORT.md`，并在使用提示词时保存 `STYLE_PROMPT.md` 作为标准 prompt 快照，可以直接拖入 FL Studio 继续编曲。该过程不读取音频，而是用指纹中的调性、BPM、和弦进行、段落比例和层次比例生成原创编曲草稿。
 
-`--prompt` 支持常见中文/英文风格词，如快慢、明亮/暗沉、鼓密/少鼓、Pad 多少；agent 也可以把提示词解析成 `params.json` 用 `--params` 传入，参数映射见 `references/style_prompt_guide.md`。
+`--prompt` 支持常见中文/英文风格词，如快慢、明亮/暗沉、鼓密/少鼓、Pad 多少；agent 应先把自然语言规范为标准 prompt，再通过 `--prompt-file` 或 `params.json` 输入，参数映射见 `references/style_prompt_guide.md`。
 
 ## 虚拟歌姬特化
 

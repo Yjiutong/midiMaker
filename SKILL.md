@@ -127,24 +127,34 @@ python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
 
 该模式不读取音频，不保证还原某首歌；它是把作者指纹翻译成可编辑的原创 MIDI 草稿，适合先搭结构再交由人工完善。
 
-### Agent 提示词微调风格参数
+### Agent 提示词规范化流程（必须步骤）
 
-接入 agent 后，可用自然语言微调风格参数。最简单的方式是把用户提示词直接传给 `--prompt`：
+接入 agent 后，用户自然语言不能直接当作最终参数使用，agent 需要先把它规范成标准 prompt，再进入生成流程：
+
+1. **收集自然语言**：读取用户的风格描述，例如“更明亮、鼓更密、副歌更高、前奏安静”。
+
+2. **规范成标准 prompt**：按 `references/style_prompt_guide.md` 的模板整理为结构化标准 prompt，包含风格方向、速度、配器强调、段落处理；不保留互相矛盾的模糊词。
+
+3. **解析可计算参数**：agent 把标准 prompt 映射为 `params.json` 参数，或确认 `--prompt` 的关键词能表达清楚。
+
+4. **传入生成流程**：把标准 prompt 写入 `STYLE_PROMPT.md` 后通过 `--prompt-file` 输入，或直接用 `--prompt` / `--params` 输入：
 
 ```bash
 python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
-    --prompt "更明亮、鼓更密、快一点" \
+    --prompt-file STYLE_PROMPT.md \
     --out output/compose/ --name new_song --bars 32 --seed 42
 ```
 
-如果 agent 已经理解提示词，也可以解析成 `params.json` 再传入：
+5. **回读并迭代**：脚本会输出 `COMPOSE_REPORT.md` 和标准 prompt 快照 `STYLE_PROMPT.md`。agent 据此向用户说明生效的 BPM、密度、明亮度、和弦进行，再按用户的下一轮自然语言继续循环。
+
+如果 agent 已把提示词解析成明确参数，也可以直接传 `--params`：
 
 ```bash
 python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
     --params params.json --out output/compose/
 ```
 
-支持参数包括 `bpm / bpm_shift / bars / key / scale / density / brightness / pad_density / melody_density / bass_density / drums / progression / section_ratio / seed`。完整提示词到参数的映射见 `references/style_prompt_guide.md`。
+支持参数包括 `bpm / bpm_shift / bars / key / scale / density / brightness / pad_density / melody_density / bass_density / drums / progression / section_ratio / seed`。完整提示词模板和映射见 `references/style_prompt_guide.md`。
 
 ## 输出目录结构
 

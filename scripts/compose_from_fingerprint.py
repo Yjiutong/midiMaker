@@ -12,6 +12,7 @@ CLI:
   --features features.json  补充/覆盖 key、bpm、chord_sequence
   --bpm 125 --key A --scale minor 手动覆盖
   --prompt "更明亮、鼓更密" 自然语言微调（agent 可直接使用）
+  --prompt-file STYLE_PROMPT.md 读取规范化的标准 prompt 文件
   --params params.json       结构化覆盖参数
 """
 
@@ -430,7 +431,8 @@ def _apply_prompt_params(prompt, params):
     if any(k in text for k in ("快", "赶", "紧凑", "活跃", "动感", "fast", "upbeat", "energetic", "dance")):
         out["bpm_shift"] = out.get("bpm_shift", 0) + 6
         out["density"] = max(0.0, min(1.0, out.get("density", 0.78) + 0.10))
-    if any(k in text for k in ("慢", "舒缓", "安静", "抒情", "slow", "chill", "ballad", "calm", "ambient")):
+    quiet_context = bool(re.search(r"(前奏|尾奏|开头|结束|intro|outro)[^。！？\n]{0,12}(安静|轻)", text))
+    if any(k in text for k in ("慢", "舒缓", "安静", "抒情", "slow", "chill", "ballad", "calm", "ambient")) and not quiet_context:
         out["bpm_shift"] = out.get("bpm_shift", 0) - 8
         out["density"] = max(0.0, min(1.0, out.get("density", 0.78) - 0.15))
     if any(k in text for k in ("亮", "明亮", "清亮", "通透", "bright", "sparkling", "pop")):
@@ -454,6 +456,7 @@ def main():
                     help="AUTHOR_FINGERPRINT.json")
     ap.add_argument("--features", default=None, help="可选 features.json")
     ap.add_argument("--prompt", default=None, help="自然语言风格提示词，例如：更明亮、鼓更密、慢一点")
+    ap.add_argument("--prompt-file", default=None, help="标准 prompt 文件（agent 规范化后的中间产物）")
     ap.add_argument("--params", default=None, help="可选 params.json，支持 bpm/bars/key/scale/density/brightness 等")
     ap.add_argument("--out", default="midi_gen", help="输出目录")
     ap.add_argument("--name", default="style_demo")
@@ -467,6 +470,14 @@ def main():
     if not args.fingerprint and not args.features:
         print("请提供 AUTHOR_FINGERPRINT.json 或 --features features.json", file=sys.stderr)
         sys.exit(1)
+
+    if args.prompt_file:
+        pf = Path(args.prompt_file)
+        if not pf.exists():
+            print(f"标准 prompt 文件不存在: {pf}", file=sys.stderr)
+            sys.exit(1)
+        file_prompt = pf.read_text(encoding="utf-8").strip()
+        args.prompt = (args.prompt + "\n" + file_prompt).strip() if args.prompt else file_prompt
 
     params = {}
     if args.params:
@@ -584,6 +595,22 @@ def main():
         "",
     ]
     (out / "COMPOSE_REPORT.md").write_text("\n".join(report_lines), encoding="utf-8")
+    if args.prompt:
+        params_snapshot = {k: params[k] for k in sorted(params)
+                           if k in ("bpm", "bpm_shift", "bars", "key", "scale",
+                                    "density", "brightness", "pad_density",
+                                    "melody_density", "bass_density", "drums",
+                                    "progression", "section_ratio", "seed")}
+        prompt_lines = [
+            "# 标准风格 Prompt", "",
+            args.prompt, "",
+            "## 生效参数",
+            "```json",
+            json.dumps(params_snapshot, ensure_ascii=False, indent=2),
+            "```",
+            "",
+        ]
+        (out / "STYLE_PROMPT.md").write_text("\n".join(prompt_lines), encoding="utf-8")
     print(f"[compose_from_fingerprint] 输出: {out}")
 
 
