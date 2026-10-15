@@ -1,0 +1,14 @@
+.skill-deps/
+__pycache__/
+*.py[cod]
+pip-*/
+.pytest_cache/
+.venv/
+
+# generated analysis outputs at repo root
+/features.json
+/notes.json
+/AUDIO_NARRATIVE.md
+/SECTION_SUMMARY.*
+/STYLE_REPORT.md
+/TIMBRE_REPORT.*

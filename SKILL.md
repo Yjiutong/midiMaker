@@ -27,7 +27,14 @@ description: 将给定 MP3 拆解为编曲元素多轨 MIDI 并分析音乐风�
 
 ## 环境依赖
 
-详见仓库根目录 `README.md`。快速安装（Windows / macOS）：
+依赖已内置为 skill 的一部分：优先使用仓库内 `.skill-deps` 运行环境，首次使用请执行：
+
+```bash
+python scripts/install_skill_deps.py            # 核心依赖：librosa/scipy/numpy/soundfile/pretty_midi
+python scripts/install_skill_deps.py --full     # 额外安装 demucs/basic-pitch/torchcrepe（体积较大）
+```
+
+也可手动快速安装（Windows / macOS）：
 
 ```bash
 pip install demucs basic-pitch librosa scipy pretty_midi numpy
@@ -72,6 +79,13 @@ python scripts/instrument_map.py  features.json  midi/  --out INSTRUMENT_MAP.md
 python scripts/style_report.py  features.json  midi/  --out STYLE_REPORT.md \
        [--fingerprint AUTHOR_FINGERPRINT.json]
 
+# 6.5 段落摘要 + 音频叙事（供模型快速阅读）
+python scripts/section_summary.py  features.json  \
+       --midi midi_raw/ --midi midi/  --out SECTION_SUMMARY.md
+
+# 6.6 音色分析（全曲 + 各 stem 的音色标签/MFCC/频谱对比）
+python scripts/timbre_analysis.py  features.json  --out TIMBRE_REPORT.md
+
 # 7. 人声参考包（SV 专用）
 python scripts/vocal_track_sv.py  stems/vocals.wav  --out vocal/ --virtual-singer
 
@@ -100,6 +114,10 @@ output/
 ├── README_导入FLStudio.md  # 导入步骤 + 每轨乐器类型
 ├── STYLE_REPORT.md         # 风格拆析
 ├── INSTRUMENT_MAP.md       # 每轨乐器类型建议
+    ├── notes.json              # 每轨音符元数据（起止时间/音高/力度/置信度）
+    ├── SECTION_SUMMARY.md      # 每段落和弦/鼓型/织体摘要 + stem 频谱
+    ├── AUDIO_NARRATIVE.md      # 简短音频叙事，给模型快速阅读
+    ├── TIMBRE_REPORT.md/json   # 音色分析：全曲 + 分轨音色标签/MFCC/频谱对比
 └── vocal/                  # 人声参考包
     ├── vocal_melody.mid    # 主旋律音高线（参考唱线）
     ├── lyrics_placeholder.txt  # 按乐句切分的歌词占位
@@ -155,9 +173,13 @@ output/
 | `split_arrangement.py` | 调用 perceptual_filter 把 other 拆 主旋律/和声Pad |
 | `instrument_map.py` | 按 genre 输出**乐器类型**标注 |
 | `style_report.py` | LLM 风格拆析报告（回查指纹） |
+| `timbre_analysis.py` | 音色分析报告：全曲 + 分轨音色标签/MFCC/频谱对比 |
+| `section_summary.py` | 每段落和弦/鼓型/织体摘要 + Stem 频谱 + 音频叙事 |
+| `notes_json.py` / `notes_io.py` | 生成/读写每轨 `notes.json`（起止/音高/力度/置信度） |
 | `vocal_track_sv.py` | SV 人声参考包（音高线 + 歌词占位 + 声库类型） |
 | `build_fingerprint.py` | 多首聚合 → AUTHOR_FINGERPRINT.json |
 | `package_output.py` | 合并多轨 MIDI + FL Studio 导入说明 |
+| `install_skill_deps.py` / `skill_runtime.py` | 内置依赖安装与运行时路径 |
 
 ## 局限与置信度（务必告知用户）
 

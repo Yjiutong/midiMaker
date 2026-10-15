@@ -15,6 +15,12 @@ transcribe_stems.py - 各 stem 转 MIDI + 鼓分类 + 人声音高线
 import argparse
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from skill_runtime import prepend_site_packages  # noqa: E402
+prepend_site_packages()
+from notes_io import write_notes_json  # noqa: E402
+
 import numpy as np
 
 try:
@@ -23,7 +29,7 @@ try:
     from scipy.ndimage import gaussian_filter1d, maximum_filter1d
     from scipy.signal import find_peaks
 except ImportError:
-    print("请先安装: pip install librosa pretty_midi scipy", file=sys.stderr)
+    print("缺少依赖：请先运行 python scripts/install_skill_deps.py（最佳）或 pip install librosa pretty_midi scipy", file=sys.stderr)
     sys.exit(1)
 
 SR = 22050
@@ -156,8 +162,10 @@ def track_notes_onset_driven(onset_notes, cqt, freqs, times, sr=SR, hop=HOP,
             end_time = times[of]
             if (end_time - times[prev['start_frame']]) >= min_note_frames * (hop / sr):
                 vel = int(min(127, max(1, prev['start_amp'] * velocity_scale)))
+                conf = max(0.2, min(1.0, prev.get('snr', 1.0) / 3.0))
                 notes.append({'start': float(times[prev['start_frame']]),
-                              'end': float(end_time), 'pitch': int(pitch), 'velocity': vel})
+                              'end': float(end_time), 'pitch': int(pitch), 'velocity': vel,
+                              'confidence': conf})
         freq = midi_to_hz(pitch)
         band_mask = (freqs >= freq * 2 ** (-1 / 12)) & (freqs <= freq * 2 ** (1 / 12))
         band_indices = np.where(band_mask)[0]
@@ -193,15 +201,16 @@ def track_notes_onset_driven(onset_notes, cqt, freqs, times, sr=SR, hop=HOP,
                     break
         if end_frame - of >= min_note_frames:
             active_pitches[pitch] = {'start_frame': of, 'start_amp': on['amplitude'],
-                                    'end_frame': end_frame}
+                                    'end_frame': end_frame, 'snr': on['snr']}
 
     for pitch, info in active_pitches.items():
         end_time = float(times[info['end_frame']])
         start_time = float(times[info['start_frame']])
         if (end_time - start_time) >= min_note_frames * (hop / sr):
             vel = int(min(127, max(1, info['start_amp'] * velocity_scale)))
+            conf = max(0.2, min(1.0, info.get('snr', 1.0) / 3.0))
             notes.append({'start': start_time, 'end': end_time,
-                          'pitch': int(pitch), 'velocity': vel})
+                          'pitch': int(pitch), 'velocity': vel, 'confidence': conf})
 
     notes = _merge_by_pitch(notes, gap_threshold=0.05)
     notes.sort(key=lambda n: n['start'])
@@ -222,6 +231,8 @@ def _merge_by_pitch(notes, gap_threshold=0.05):
             if n['start'] - cur['end'] <= gap_threshold:
                 cur['end'] = max(cur['end'], n['end'])
                 cur['velocity'] = max(cur['velocity'], n['velocity'])
+                cur['confidence'] = max(cur.get('confidence', 0.5),
+                                        n.get('confidence', 0.5))
             else:
                 merged.append(cur)
                 cur = dict(n)
@@ -326,19 +337,19 @@ def _merge_pitch_seq_to_notes(pitch_seq, times, min_duration_frames, velocity=80
                 if cur_count >= min_duration_frames:
                     notes.append({'start': float(times[cur_start]),
                                   'end': float(times[i]), 'pitch': int(cur_pitch),
-                                  'velocity': velocity})
+                          'velocity': velocity, 'confidence': 0.75})
                 cur_pitch, cur_start, cur_count = pitch, i, 1
         else:
             if cur_pitch > 0 and cur_count >= min_duration_frames:
                 notes.append({'start': float(times[cur_start]),
                               'end': float(times[i]), 'pitch': int(cur_pitch),
-                              'velocity': velocity})
+                              'velocity': velocity, 'confidence': 0.75})
             cur_pitch = 0
             cur_count = 0
     if cur_pitch > 0 and cur_count >= min_duration_frames:
         notes.append({'start': float(times[cur_start]),
                       'end': float(times[-1]), 'pitch': int(cur_pitch),
-                      'velocity': velocity})
+                      'velocity': velocity, 'confidence': 0.75})
     return notes
 
 
@@ -354,6 +365,8 @@ def classify_drum_hits(y, sr):
     lo_band = freqs <= 150
     mid_band = (freqs > 150) & (freqs <= 2000)
     hi_band = freqs > 6000
+    onset_levels = np.array([onset_env[f] for f in onset_frames]) + 1e-9
+    peak_level = np.percentile(onset_levels, 75)
     hits = []
     for f in onset_frames:
         t = times[f]
@@ -363,10 +376,18 @@ def classify_drum_hits(y, sr):
         e_hi = seg[hi_band].sum()
         total = e_lo + e_mid + e_hi + 1e-9
         r_lo, r_hi = e_lo / total, e_hi / total
-        if r_lo > 0.45:
+        centroid = float(np.sum(freqs * seg.sum(axis=1)) / total)
+        strong_hi = onset_env[f] >= peak_level
+        # HPSS 鼓轨包含不少踩镲/镲片段，按频谱质心而不是简单中高频比来区分，
+        # 避免把所有中高频起音都误判成军鼓。
+        if r_lo > 0.35 or (r_lo > 0.25 and centroid < 1800):
             key = 36           # kick
-        elif r_hi > 0.5:
+        elif centroid > 5000 or r_hi > 0.55:
+            key = 49 if strong_hi else 46  # 强烈镲/开镲
+        elif centroid > 3300 or r_hi > 0.35:
             key = 46 if onset_env[f] > np.percentile(onset_env, 70) else 42  # open/closed hat
+        elif centroid < 1150:
+            key = 36           # 低频清晰，仍按底鼓处理
         elif e_mid > e_hi:
             key = 38           # snare
         else:
@@ -399,6 +420,20 @@ def transcribe_melodic_basic_pitch(audio_path, min_freq=None, max_freq=None):
     return midi_data, note_events
 
 
+def pm_to_note_events(pm, default_confidence=0.7):
+    events = []
+    for inst in pm.instruments:
+        for n in inst.notes:
+            events.append({
+                "start": float(n.start),
+                "end": float(n.end),
+                "pitch": int(n.pitch),
+                "velocity": int(n.velocity),
+                "confidence": default_confidence,
+            })
+    return events
+
+
 # ---------- 主流程 ----------
 def main():
     ap = argparse.ArgumentParser(description="stem 转 MIDI + 鼓分类 + 人声音高线")
@@ -423,6 +458,8 @@ def main():
             print("basicpitch 未安装，回退到 cqt 引擎", file=sys.stderr)
             args.engine = "cqt"
 
+    notes_entries = []
+
     # 贝斯
     bass_wav = sd / "bass.wav"
     if bass_wav.exists():
@@ -436,6 +473,9 @@ def main():
         else:
             md, _ = transcribe_melodic_basic_pitch(str(bass_wav), min_freq=30, max_freq=260)
             md.write(str(out / "bass.mid"))
+            notes = pm_to_note_events(md)
+        notes_entries.append({"track": "bass", "file": "bass.mid", "channel": 2,
+                              "program": 33, "notes": notes})
         print("[transcribe] bass.mid 完成")
 
     # other（后续 split_arrangement 拆分主旋律/和声）
@@ -449,6 +489,9 @@ def main():
         else:
             md, _ = transcribe_melodic_basic_pitch(str(other_wav))
             md.write(str(out / "other.mid"))
+            notes = pm_to_note_events(md)
+        notes_entries.append({"track": "other", "file": "other.mid", "channel": 0,
+                              "program": 0, "notes": notes})
         print("[transcribe] other.mid 完成（待 split_arrangement 拆分主旋律/和声）")
 
     # 鼓
@@ -457,6 +500,11 @@ def main():
         y, sr = librosa.load(str(drums_wav), sr=SR, mono=True)
         hits = classify_drum_hits(y, sr)
         build_drum_midi(hits).write(str(out / "drums.mid"))
+        drum_notes = [{"start": t, "end": t + 0.12, "pitch": key, "velocity": vel,
+                       "confidence": min(1.0, 0.4 + vel / 200.0)}
+                      for t, key, vel in hits]
+        notes_entries.append({"track": "drums", "file": "drums.mid", "channel": 9,
+                              "program": 0, "is_drum": True, "notes": drum_notes})
         print(f"[transcribe] drums.mid 完成，{len(hits)} 个鼓点")
 
     # 人声主旋律音高线（CREPE / pyin）
@@ -466,8 +514,14 @@ def main():
             str(vocals_wav),
             model="full" if args.virtual_singer else "tiny",)
         notes_to_midi(vnotes, program=0).write(str(out / "vocals_melody.mid"))
+        notes_entries.append({"track": "vocals_melody", "file": "vocals_melody.mid",
+                              "channel": 4, "program": 0, "notes": vnotes})
         mode = "virtual-singer" if args.virtual_singer else "default"
         print(f"[transcribe] vocals_melody.mid 完成（{mode}，{len(vnotes)} 个音高事件，仅供 SV 参考）")
+
+    if notes_entries:
+        notes_path = write_notes_json(out / "notes.json", notes_entries, source=str(sd))
+        print(f"[transcribe] 音符清单: {notes_path}")
 
     print(f"\n输出目录: {out}")
 

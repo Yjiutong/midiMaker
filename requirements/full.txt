@@ -1,0 +1,4 @@
+-r core.txt
+demucs>=4.0.1
+basic-pitch>=0.4.0
+torchcrepe>=0.0.20

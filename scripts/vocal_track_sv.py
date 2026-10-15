@@ -17,6 +17,10 @@ import argparse
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from skill_runtime import prepend_site_packages  # noqa: E402
+prepend_site_packages()
+
 
 NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
@@ -30,7 +34,7 @@ def _read_midi_notes(path):
     try:
         import pretty_midi
     except ImportError:
-        print("请先安装: pip install pretty_midi", file=sys.stderr)
+        print("缺少依赖：请先运行 python scripts/install_skill_deps.py（最佳）或 pip install pretty_midi", file=sys.stderr)
         sys.exit(1)
     pm = pretty_midi.PrettyMIDI(str(path))
     return [{"pitch": int(n.pitch), "start": float(n.start), "end": float(n.end),
@@ -52,7 +56,7 @@ def _write_midi(path, notes):
     try:
         import pretty_midi
     except ImportError:
-        print("请先安装: pip install pretty_midi", file=sys.stderr)
+        print("缺少依赖：请先运行 python scripts/install_skill_deps.py（最佳）或 pip install pretty_midi", file=sys.stderr)
         sys.exit(1)
     pm = pretty_midi.PrettyMIDI()
     inst = pretty_midi.Instrument(program=0, is_drum=False)

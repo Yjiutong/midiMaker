@@ -14,6 +14,10 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from skill_runtime import prepend_site_packages  # noqa: E402
+prepend_site_packages()
+
 
 def _fmt_sec(seconds):
     m = int(seconds // 60)
@@ -161,6 +165,20 @@ def main():
     lines += [""]
 
     lines += ["## 五、音色取向", ""]
+    timbre = features.get("timbre")
+    if timbre:
+        tags = ", ".join(timbre.get("tags", []))
+        lines += [f"- 音色标签：{tags}",
+                  f"- MFCC 亮度：{timbre.get('brightness', '?')}",
+                  f"- 频谱平坦度：{timbre.get('spectral_flatness', '?')}",
+                  f"- 低频能量占比：{timbre.get('low_energy_ratio', '?')}"]
+    stem_timbre = features.get("stem_timbre", {})
+    if stem_timbre:
+        lines += ["- 分轨音色：", ""]
+        for name, vals in stem_timbre.items():
+            tags = ", ".join(vals.get("tags", []))
+            lines += [f"  - {name}: {tags}（centroid {vals.get('spectral_centroid', '?')} Hz，" +
+                      f"flatness {vals.get('spectral_flatness', '?')}）"]
     lines += [f"- 频谱质心：{features.get('spectral_centroid', '?')}",
               f"- 频谱带宽：{features.get('spectral_bandwidth', '?')}",
               "- 说明：数字越大通常越亮；失真/饱和程度需结合音频主观听感。", ""]

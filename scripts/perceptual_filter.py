@@ -82,7 +82,7 @@ def _overlap(a, b):
 
 
 def separate_arrangement_layers(notes, melody_low=48, pad_low=36,
-                                overlap_threshold=2):
+                                overlap_threshold=1):
     """把符号域音符粗略分成 melody / pad / bass 三层。"""
     notes = clean_notes(notes)
     if not notes:
@@ -108,6 +108,20 @@ def separate_arrangement_layers(notes, melody_low=48, pad_low=36,
             melody.append(n)
         else:
             pad.append(n)
+
+    if not melody and pad:
+        candidates = sorted([n for n in pad if n["pitch"] >= melody_low],
+                            key=lambda n: -n["velocity"])
+        chosen = []
+        window_start = None
+        for n in candidates:
+            if window_start is None or n["start"] - window_start >= 4.0:
+                chosen.append(id(n))
+                window_start = n["start"]
+        if chosen:
+            chosen_ids = set(chosen)
+            melody = [n for n in pad if id(n) in chosen_ids]
+            pad = [n for n in pad if id(n) not in chosen_ids]
 
     return {
         "melody": merge_notes(melody, gap=0.04),

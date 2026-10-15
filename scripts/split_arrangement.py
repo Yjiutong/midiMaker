@@ -15,12 +15,17 @@ import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from skill_runtime import prepend_site_packages  # noqa: E402
+prepend_site_packages()
+from notes_io import write_notes_json  # noqa: E402
+
 
 def _read_midi_notes(path: Path):
     try:
         import pretty_midi
     except ImportError:
-        print("请先安装: pip install pretty_midi", file=sys.stderr)
+        print("缺少依赖：请先运行 python scripts/install_skill_deps.py（最佳）或 pip install pretty_midi", file=sys.stderr)
         sys.exit(1)
     pm = pretty_midi.PrettyMIDI(str(path))
     notes = []
@@ -31,6 +36,7 @@ def _read_midi_notes(path: Path):
                 "start": float(n.start),
                 "end": float(n.end),
                 "velocity": int(n.velocity),
+                "confidence": 0.8,
             })
     return pm.resolution, notes
 
@@ -39,7 +45,7 @@ def _write_midi(out_path: Path, note_events, program=0, is_drum=False):
     try:
         import pretty_midi
     except ImportError:
-        print("请先安装: pip install pretty_midi", file=sys.stderr)
+        print("缺少依赖：请先运行 python scripts/install_skill_deps.py（最佳）或 pip install pretty_midi", file=sys.stderr)
         sys.exit(1)
     pm = pretty_midi.PrettyMIDI()
     inst = pretty_midi.Instrument(program=program, is_drum=is_drum)
@@ -61,6 +67,8 @@ def main():
                     help="低于该音高视为和声/贝斯，默认 48")
     ap.add_argument("--pad-low", type=int, default=36,
                     help="低于该音高视为贝斯，默认 36")
+    ap.add_argument("--overlap-threshold", type=int, default=1,
+                    help="同时出现音符超过该数量则倾向作为和声，默认 1")
     args = ap.parse_args()
 
     other_path = Path(args.other_midi)
@@ -71,7 +79,8 @@ def main():
     from perceptual_filter import separate_arrangement_layers
     resolution, notes = _read_midi_notes(other_path)
     layers = separate_arrangement_layers(notes, melody_low=args.melody_low,
-                                         pad_low=args.pad_low)
+                                         pad_low=args.pad_low,
+                                         overlap_threshold=args.overlap_threshold)
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -81,6 +90,13 @@ def main():
         counts[layer_name] = len(events)
         if events:
             _write_midi(out / f"{ext}.mid", events, program=0 if ext != "pad" else 1)
+    entries = []
+    for name, ch, prog in (("melody", 0, 0), ("pad", 1, 1), ("bass", 2, 2)):
+        if layers[name]:
+            entries.append({"track": name, "file": f"{name}.mid", "channel": ch,
+                            "program": prog, "notes": layers[name]})
+    if entries:
+        write_notes_json(out / "notes.json", entries, source=str(other_path))
     with open(out / "arrangement_notes.json", "w", encoding="utf-8") as f:
         json.dump({"resolution": resolution, "layers": layers, "counts": counts},
                   f, ensure_ascii=False, indent=2)

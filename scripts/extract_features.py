@@ -14,12 +14,16 @@ import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from skill_runtime import prepend_site_packages  # noqa: E402
+prepend_site_packages()
+
 
 def _load_audio(audio_path):
     try:
         import librosa
     except ImportError:
-        print("请先安装: pip install librosa", file=sys.stderr)
+        print("缺少依赖：请先运行 python scripts/install_skill_deps.py（最佳）或 pip install librosa", file=sys.stderr)
         sys.exit(1)
     return librosa.load(str(audio_path), sr=22050, mono=True)
 
@@ -75,38 +79,75 @@ def _sections(librosa, y, sr, hop_length=512):
     if len(peaks) >= 2:
         peaks = peaks[np.argsort(onset_env[peaks])[-5:]]
         peaks.sort()
-        bounds.extend(int(p) for p in peaks)
+        # 去掉离曲首/曲尾太近的边界，避免出现 0:00-0:00 的碎片段落。
+        duration_sec = float(len(y) / sr)
+        for p in peaks:
+            t = float(times[p])
+            if 1.5 < t < duration_sec - 1.5:
+                bounds.append(int(p))
     bounds.append(n - 1)
     bounds = sorted(set(bounds))
     chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
-    sections = []
-    label_idx = 0
-    prev_label = None
-    prev_mean = None
+
+    raw_sections = []
     labels = ["A", "B", "C", "D", "E", "F", "G", "H"]
     for i in range(len(bounds) - 1):
         s, e = bounds[i], bounds[i + 1]
         seg_chroma = chroma[:, s:e].mean(axis=1) if e > s else chroma[:, s]
-        if prev_mean is not None:
-            denom = (np.sqrt(np.sum(seg_chroma ** 2)) *
-                     np.sqrt(np.sum(prev_mean ** 2)) + 1e-9)
-            corr = float(np.dot(seg_chroma, prev_mean) / denom)
-            if corr < 0.88:
-                label_idx = min(label_idx + 1, len(labels) - 1)
-            prev_label = labels[label_idx]
-        else:
-            prev_label = labels[0]
-            prev_mean = seg_chroma
         start = float(times[s])
         end = float(times[e])
-        sections.append({
+        raw_sections.append({
             "id": i,
-            "label": prev_label,
+            "label": "?",
             "start": start,
             "end": end,
             "duration": round(end - start, 3),
+            "chroma": seg_chroma,
         })
-        prev_mean = seg_chroma
+
+    # 合并过短段落：短的优先并入前一段，段首碎片并入后一段。
+    min_seconds = 6.0
+    merged = []
+    for sec in raw_sections:
+        if not merged:
+            merged.append(sec)
+            continue
+        prev = merged[-1]
+        if sec["duration"] < min_seconds or prev["duration"] < min_seconds:
+            prev["end"] = sec["end"]
+            prev["duration"] = round(prev["end"] - prev["start"], 3)
+        else:
+            merged.append(sec)
+    if merged:
+        merged[-1]["end"] = float(len(y) / sr)
+        merged[-1]["duration"] = round(merged[-1]["end"] - merged[-1]["start"], 3)
+
+    # 用已有段落色度相似度贴 A/B/C 标签，重复段落复用旧标签。
+    label_means = []
+    next_label = 0
+    sections = []
+    for sec in merged:
+        best_label, best_corr = None, -1.0
+        for idx, mean in enumerate(label_means):
+            denom = (np.sqrt(np.sum(sec["chroma"] ** 2)) *
+                     np.sqrt(np.sum(mean ** 2)) + 1e-9)
+            corr = float(np.dot(sec["chroma"], mean) / denom)
+            if corr > best_corr:
+                best_corr = corr
+                best_label = labels[idx]
+        if best_corr >= 0.88 and best_label is not None:
+            label = best_label
+        else:
+            label = labels[min(next_label, len(labels) - 1)]
+            label_means.append(sec["chroma"])
+            next_label += 1
+        sections.append({
+            "id": len(sections),
+            "label": label,
+            "start": round(sec["start"], 3),
+            "end": round(sec["end"], 3),
+            "duration": round(sec["end"] - sec["start"], 3),
+        })
     return sections
 
 
@@ -127,6 +168,112 @@ def _stem_energy(librosa, stems_dir, expected):
     return result
 
 
+def _stem_spectral(librosa, stems_dir, expected, hop=512):
+    import numpy as np
+    result = {}
+    sd = Path(stems_dir) if stems_dir else None
+    if sd and sd.exists():
+        for name in expected:
+            p = sd / f"{name}.wav"
+            if not p.exists():
+                continue
+            try:
+                y, sr = librosa.load(str(p), sr=22050, mono=True)
+                dur = max(float(len(y) / sr), 1e-6)
+                S = np.abs(librosa.stft(y, n_fft=2048, hop_length=hop))
+                cent = librosa.feature.spectral_centroid(S=S, sr=sr)[0]
+                bandwidth = librosa.feature.spectral_bandwidth(S=S, sr=sr)[0]
+                rms = librosa.feature.rms(S=S)[0]
+                flux = np.mean(np.abs(np.diff(S, axis=1)))
+                denom = float(np.mean(S) + 1e-9)
+                roughness = float(flux / denom)
+                onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop)
+                onset_count = len(librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr))
+                result[name] = {
+                    "rms": round(float(np.mean(rms)), 6),
+                    "spectral_centroid": round(float(np.mean(cent)), 1),
+                    "spectral_bandwidth": round(float(np.mean(bandwidth)), 1),
+                    "roughness": round(roughness, 4),
+                    "onset_count": int(onset_count),
+                    "onset_density": round(onset_count / dur, 3),
+                }
+            except Exception:
+                continue
+    return result
+
+
+def _timbre_profile(librosa, y, sr, hop=512):
+    """计算一段音频的模型友好音色特征。"""
+    import numpy as np
+    S = np.abs(librosa.stft(y, n_fft=2048, hop_length=hop))
+    if S.size == 0:
+        return None
+    freqs = librosa.fft_frequencies(sr=sr, n_fft=2048)
+    cent = librosa.feature.spectral_centroid(S=S, sr=sr)[0]
+    bandwidth = librosa.feature.spectral_bandwidth(S=S, sr=sr)[0]
+    flatness = librosa.feature.spectral_flatness(S=S)[0]
+    contrast = librosa.feature.spectral_contrast(S=S, sr=sr)
+    rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr, hop_length=hop, roll_percent=0.85)[0]
+    zcr = librosa.feature.zero_crossing_rate(y, hop_length=hop)[0]
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=14, hop_length=hop)
+    seg_energy = np.sum(S, axis=0) + 1e-12
+    low_ratio = float(np.mean(np.sum(S[freqs <= 200.0], axis=0) / seg_energy))
+    bright_norm = float(np.mean(cent) / (sr / 2.0))
+
+    tags = []
+    if bright_norm > 0.24:
+        tags.append("明亮")
+    elif bright_norm < 0.10:
+        tags.append("偏暗")
+    else:
+        tags.append("中性亮度")
+    mean_flat = float(np.mean(flatness))
+    if mean_flat > 0.35:
+        tags.append("噪声感")
+    elif mean_flat < 0.12:
+        tags.append("干净集中")
+    else:
+        tags.append("中等平坦")
+    if low_ratio > 0.20:
+        tags.append("低频厚重")
+    if float(np.mean(zcr)) > 0.15:
+        tags.append("颗粒/失真")
+    if not tags:
+        tags.append("中性")
+
+    return {
+        "brightness": round(bright_norm, 4),
+        "spectral_centroid": round(float(np.mean(cent)), 1),
+        "spectral_bandwidth": round(float(np.mean(bandwidth)), 1),
+        "spectral_flatness": round(mean_flat, 4),
+        "spectral_rolloff": round(float(np.mean(rolloff)), 1),
+        "zero_crossing_rate": round(float(np.mean(zcr)), 4),
+        "low_energy_ratio": round(low_ratio, 4),
+        "spectral_contrast_mean": [round(float(v), 2) for v in contrast.mean(axis=1)],
+        "mfcc_mean": [round(float(v), 2) for v in mfcc.mean(axis=1)],
+        "mfcc_std": [round(float(v), 2) for v in mfcc.std(axis=1)],
+        "tags": tags,
+    }
+
+
+def _stem_timbre(librosa, stems_dir, expected, hop=512):
+    result = {}
+    sd = Path(stems_dir) if stems_dir else None
+    if sd and sd.exists():
+        for name in expected:
+            p = sd / f"{name}.wav"
+            if not p.exists():
+                continue
+            try:
+                y, sr = librosa.load(str(p), sr=22050, mono=True)
+                profile = _timbre_profile(librosa, y, sr, hop=hop)
+                if profile:
+                    result[name] = profile
+            except Exception:
+                continue
+    return result
+
+
 def main():
     ap = argparse.ArgumentParser(description="提取音乐全局特征")
     ap.add_argument("input", help="输入音频")
@@ -144,7 +291,7 @@ def main():
         import librosa
         import numpy as np
     except ImportError:
-        print("请先安装: pip install librosa numpy", file=sys.stderr)
+        print("缺少依赖：请先运行 python scripts/install_skill_deps.py（最佳）或 pip install librosa numpy", file=sys.stderr)
         sys.exit(1)
 
     y, sr = _load_audio(audio_path)
@@ -192,7 +339,10 @@ def main():
         "rms": round(float(np.mean(rms)), 6),
         "onset_frames": int(len(onset_frames)),
         "onset_density": round(len(onset_frames) / max(duration, 1e-6), 3),
+        "timbre": _timbre_profile(librosa, y, sr, hop=hop),
         "stem_energy": _stem_energy(librosa, args.stems, ["vocals", "drums", "bass", "other"]),
+        "stem_spectral": _stem_spectral(librosa, args.stems, ["vocals", "drums", "bass", "other"]),
+        "stem_timbre": _stem_timbre(librosa, args.stems, ["vocals", "drums", "bass", "other"], hop=hop),
     }
 
     if args.virtual_singer:

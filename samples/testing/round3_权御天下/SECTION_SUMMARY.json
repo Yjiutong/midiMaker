@@ -1,0 +1,463 @@
+{
+  "sections": [
+    {
+      "id": 0,
+      "label": "A",
+      "start": 0.0,
+      "end": 56.68,
+      "chords": [
+        "C#:maj",
+        "F:maj",
+        "G#:maj",
+        "A:maj",
+        "B:min",
+        "A:min"
+      ],
+      "drum_pattern": "kick 10 + snare 1 + hat 154 + cymbal 46",
+      "drum_counts": {
+        "kick": 10,
+        "snare": 1,
+        "hat": 154,
+        "cymbal": 46,
+        "tom": 0
+      },
+      "texture": [
+        "人声进入",
+        "主旋律少",
+        "other进入",
+        "pad进入",
+        "bass进入"
+      ]
+    },
+    {
+      "id": 1,
+      "label": "A",
+      "start": 56.68,
+      "end": 120.23,
+      "chords": [
+        "B:min",
+        "C#:maj",
+        "A:min",
+        "C#:min",
+        "A:maj"
+      ],
+      "drum_pattern": "kick 2 + snare 1 + hat 174 + cymbal 48",
+      "drum_counts": {
+        "kick": 2,
+        "snare": 1,
+        "hat": 174,
+        "cymbal": 48,
+        "tom": 0
+      },
+      "texture": [
+        "人声进入",
+        "主旋律少",
+        "other进入",
+        "pad进入",
+        "bass进入"
+      ]
+    },
+    {
+      "id": 2,
+      "label": "A",
+      "start": 120.23,
+      "end": 135.98,
+      "chords": [
+        "B:min",
+        "C#:maj",
+        "A:maj",
+        "A:min",
+        "C#:min"
+      ],
+      "drum_pattern": "kick 1 + snare 1 + hat 49 + cymbal 10",
+      "drum_counts": {
+        "kick": 1,
+        "snare": 1,
+        "hat": 49,
+        "cymbal": 10,
+        "tom": 0
+      },
+      "texture": [
+        "人声进入",
+        "主旋律少",
+        "other密集",
+        "pad密集",
+        "bass进入"
+      ]
+    },
+    {
+      "id": 3,
+      "label": "A",
+      "start": 135.98,
+      "end": 197.93,
+      "chords": [
+        "B:min",
+        "C#:maj",
+        "A:maj",
+        "A:min",
+        "G#:maj",
+        "D:min",
+        "E:min",
+        "F#:maj"
+      ],
+      "drum_pattern": "kick 3 + snare 1 + hat 160 + cymbal 40",
+      "drum_counts": {
+        "kick": 3,
+        "snare": 1,
+        "hat": 160,
+        "cymbal": 40,
+        "tom": 0
+      },
+      "texture": [
+        "人声进入",
+        "主旋律少",
+        "other进入",
+        "pad进入",
+        "bass进入"
+      ]
+    },
+    {
+      "id": 4,
+      "label": "A",
+      "start": 197.93,
+      "end": 250.08,
+      "chords": [
+        "F#:maj",
+        "E:maj",
+        "D:maj",
+        "C#:min",
+        "B:min",
+        "C#:maj",
+        "A:maj",
+        "A:min",
+        "C:maj",
+        "C:min",
+        "A#:min"
+      ],
+      "drum_pattern": "snare 2 + hat 107 + cymbal 18",
+      "drum_counts": {
+        "kick": 0,
+        "snare": 2,
+        "hat": 107,
+        "cymbal": 18,
+        "tom": 0
+      },
+      "texture": [
+        "人声进入",
+        "主旋律少",
+        "other进入",
+        "pad进入",
+        "bass进入"
+      ]
+    }
+  ],
+  "stem_spectral": {
+    "vocals": {
+      "rms": 0.082411,
+      "spectral_centroid": 3228.0,
+      "spectral_bandwidth": 2804.9,
+      "roughness": 0.4478,
+      "onset_count": 523,
+      "onset_density": 2.091
+    },
+    "drums": {
+      "rms": 0.057799,
+      "spectral_centroid": 3622.8,
+      "spectral_bandwidth": 2901.3,
+      "roughness": 0.542,
+      "onset_count": 825,
+      "onset_density": 3.299
+    },
+    "bass": {
+      "rms": 0.121174,
+      "spectral_centroid": 116.0,
+      "spectral_bandwidth": 147.0,
+      "roughness": 0.3941,
+      "onset_count": 915,
+      "onset_density": 3.659
+    },
+    "other": {
+      "rms": 0.082411,
+      "spectral_centroid": 3228.0,
+      "spectral_bandwidth": 2804.9,
+      "roughness": 0.4478,
+      "onset_count": 523,
+      "onset_density": 2.091
+    }
+  },
+  "stem_timbre": {
+    "vocals": {
+      "brightness": 0.2928,
+      "spectral_centroid": 3228.0,
+      "spectral_bandwidth": 2804.9,
+      "spectral_flatness": 0.0259,
+      "spectral_rolloff": 6476.7,
+      "zero_crossing_rate": 0.1433,
+      "low_energy_ratio": 0.0274,
+      "spectral_contrast_mean": [
+        37.49,
+        18.19,
+        22.52,
+        23.04,
+        19.66,
+        18.2,
+        48.28
+      ],
+      "mfcc_mean": [
+        -108.37,
+        21.77,
+        -12.29,
+        13.5,
+        -32.85,
+        -16.88,
+        -20.0,
+        -17.89,
+        -19.41,
+        -19.35,
+        -23.66,
+        -21.57,
+        -27.05,
+        -27.07
+      ],
+      "mfcc_std": [
+        52.52,
+        13.31,
+        16.81,
+        12.53,
+        10.2,
+        9.32,
+        8.85,
+        9.77,
+        8.48,
+        10.19,
+        9.11,
+        8.69,
+        9.01,
+        9.68
+      ],
+      "tags": [
+        "明亮",
+        "干净集中"
+      ]
+    },
+    "drums": {
+      "brightness": 0.3286,
+      "spectral_centroid": 3622.8,
+      "spectral_bandwidth": 2901.3,
+      "spectral_flatness": 0.0872,
+      "spectral_rolloff": 7019.0,
+      "zero_crossing_rate": 0.217,
+      "low_energy_ratio": 0.127,
+      "spectral_contrast_mean": [
+        12.35,
+        12.0,
+        15.59,
+        15.76,
+        16.02,
+        15.75,
+        46.83
+      ],
+      "mfcc_mean": [
+        -92.05,
+        45.73,
+        19.71,
+        42.36,
+        -1.12,
+        9.48,
+        4.27,
+        4.77,
+        1.24,
+        2.36,
+        -1.4,
+        2.61,
+        -0.81,
+        1.75
+      ],
+      "mfcc_std": [
+        66.9,
+        28.76,
+        25.23,
+        21.34,
+        15.74,
+        12.96,
+        11.28,
+        10.33,
+        9.49,
+        8.31,
+        7.49,
+        6.79,
+        6.46,
+        6.26
+      ],
+      "tags": [
+        "明亮",
+        "干净集中",
+        "颗粒/失真"
+      ]
+    },
+    "bass": {
+      "brightness": 0.0105,
+      "spectral_centroid": 116.0,
+      "spectral_bandwidth": 147.0,
+      "spectral_flatness": 0.0,
+      "spectral_rolloff": 159.3,
+      "zero_crossing_rate": 0.0102,
+      "low_energy_ratio": 0.9875,
+      "spectral_contrast_mean": [
+        23.62,
+        33.24,
+        14.22,
+        12.42,
+        13.28,
+        13.45,
+        28.87
+      ],
+      "mfcc_mean": [
+        -433.51,
+        59.83,
+        58.56,
+        56.48,
+        53.65,
+        50.14,
+        46.05,
+        41.48,
+        36.56,
+        31.39,
+        26.11,
+        20.85,
+        15.72,
+        10.83
+      ],
+      "mfcc_std": [
+        6.5,
+        9.12,
+        8.91,
+        8.55,
+        8.07,
+        7.49,
+        6.84,
+        6.12,
+        5.39,
+        4.67,
+        4.0,
+        3.42,
+        2.97,
+        2.67
+      ],
+      "tags": [
+        "偏暗",
+        "干净集中",
+        "低频厚重"
+      ]
+    },
+    "other": {
+      "brightness": 0.2928,
+      "spectral_centroid": 3228.0,
+      "spectral_bandwidth": 2804.9,
+      "spectral_flatness": 0.0259,
+      "spectral_rolloff": 6476.7,
+      "zero_crossing_rate": 0.1433,
+      "low_energy_ratio": 0.0274,
+      "spectral_contrast_mean": [
+        37.49,
+        18.19,
+        22.52,
+        23.04,
+        19.66,
+        18.2,
+        48.28
+      ],
+      "mfcc_mean": [
+        -108.37,
+        21.77,
+        -12.29,
+        13.5,
+        -32.85,
+        -16.88,
+        -20.0,
+        -17.89,
+        -19.41,
+        -19.35,
+        -23.66,
+        -21.57,
+        -27.05,
+        -27.07
+      ],
+      "mfcc_std": [
+        52.52,
+        13.31,
+        16.81,
+        12.53,
+        10.2,
+        9.32,
+        8.85,
+        9.77,
+        8.48,
+        10.19,
+        9.11,
+        8.69,
+        9.01,
+        9.68
+      ],
+      "tags": [
+        "明亮",
+        "干净集中"
+      ]
+    }
+  },
+  "timbre": {
+    "brightness": 0.2648,
+    "spectral_centroid": 2919.6,
+    "spectral_bandwidth": 2915.6,
+    "spectral_flatness": 0.0269,
+    "spectral_rolloff": 6381.2,
+    "zero_crossing_rate": 0.1106,
+    "low_energy_ratio": 0.2245,
+    "spectral_contrast_mean": [
+      17.44,
+      15.31,
+      18.11,
+      19.28,
+      17.27,
+      16.34,
+      47.2
+    ],
+    "mfcc_mean": [
+      -10.34,
+      57.16,
+      24.48,
+      45.84,
+      2.04,
+      14.51,
+      10.04,
+      10.74,
+      7.16,
+      7.29,
+      1.71,
+      3.84,
+      -1.64,
+      -1.28
+    ],
+    "mfcc_std": [
+      57.51,
+      19.0,
+      19.83,
+      16.29,
+      12.57,
+      11.3,
+      9.2,
+      10.36,
+      8.3,
+      8.62,
+      7.29,
+      7.28,
+      6.47,
+      6.95
+    ],
+    "tags": [
+      "明亮",
+      "干净集中",
+      "低频厚重"
+    ]
+  }
+}

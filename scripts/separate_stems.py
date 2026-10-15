@@ -16,6 +16,10 @@ import sys
 import tempfile
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from skill_runtime import prepend_site_packages  # noqa: E402
+prepend_site_packages()
+
 
 def convert_to_wav(audio: Path, tmp: Path) -> Path:
     """非 wav 转 wav；wav 直接返回。"""

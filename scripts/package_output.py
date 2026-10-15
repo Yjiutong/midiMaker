@@ -15,6 +15,10 @@ import shutil
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from skill_runtime import prepend_site_packages  # noqa: E402
+prepend_site_packages()
+
 
 TRACK_SPECS = [
     ("melody", "melody.mid", "Melody Lead", 0, False, 0),
@@ -29,7 +33,7 @@ def _read_notes(midi_path):
     try:
         import pretty_midi
     except ImportError:
-        print("请先安装: pip install pretty_midi", file=sys.stderr)
+        print("缺少依赖：请先运行 python scripts/install_skill_deps.py（最佳）或 pip install pretty_midi", file=sys.stderr)
         sys.exit(1)
     pm = pretty_midi.PrettyMIDI(str(midi_path))
     return [n for inst in pm.instruments for n in inst.notes]
@@ -65,7 +69,7 @@ def main():
     try:
         import pretty_midi
     except ImportError:
-        print("请先安装: pip install pretty_midi", file=sys.stderr)
+        print("缺少依赖：请先运行 python scripts/install_skill_deps.py（最佳）或 pip install pretty_midi", file=sys.stderr)
         sys.exit(1)
 
     bpm = _load_bpm(args.features, args.bpm)
@@ -121,6 +125,13 @@ def main():
     style_report = Path("STYLE_REPORT.md")
     if style_report.exists():
         shutil.copy2(str(style_report), str(out / "STYLE_REPORT.md"))
+    notes_json = midi_dir / "notes.json"
+    if notes_json.exists():
+        shutil.copy2(str(notes_json), str(out / "notes.json"))
+    for extra in ("SECTION_SUMMARY.md", "SECTION_SUMMARY.json", "AUDIO_NARRATIVE.md"):
+        p = Path(extra)
+        if p.exists():
+            shutil.copy2(str(p), str(out / p.name))
     vocal_src = Path("vocal")
     if vocal_src.exists():
         shutil.copytree(str(vocal_src), str(out / "vocal"), dirs_exist_ok=True)

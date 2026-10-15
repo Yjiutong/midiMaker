@@ -65,11 +65,11 @@
 
 ## 维度五：音色取向（Timbre）
 
-- **数据来源**：`features.json` 的 `spectral_centroid`（明亮度）、`spectral_bandwidth`、`roughness`（失真/粗糙度估计）。
+- **数据来源**：`features.json` 的 `spectral_centroid`/`spectral_bandwidth`（明暗）、`roughness`（失真/粗糙度估计）、`timbre`/`stem_timbre`（音色标签、平坦度、过零率、低频占比、MFCC、频谱对比）。
 
-- **分析方法**：用亮度/粗糙度区间判断音色冷暖、干净/失真、模拟/数字取向；结合各轨乐器类型（`INSTRUMENT_MAP.md`）。
+- **分析方法**：用亮度/粗糙度区间判断音色冷暖、干净/失真、模拟/数字取向；用 MFCC 与分轨音色标签区分人声、鼓、贝斯、和声层质感；结合各轨乐器类型（`INSTRUMENT_MAP.md`）。
 
-- **报告要点**：整体明暗、是否大量失真/饱和、空间感（混响多少可从低频/高频衰减粗略判断）。
+- **报告要点**：整体明暗、是否大量失真/饱和、空间感（混响多少可从低频/高频衰减粗略判断）、各 stem 是否偏亮/偏暗/干净/颗粒。
 
 ## 维度六：动态与混音（Dynamics \& Mix）
 

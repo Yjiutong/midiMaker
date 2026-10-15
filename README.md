@@ -12,17 +12,22 @@
 music-style-deconstructor/
 ├── SKILL.md                      # skill 主文档（触发词、工作流、FL Studio 导入）
 ├── README.md                     # 本文件
-├── scripts/                      # 10 个 Python 脚本
+├── scripts/                      # 分析脚本 + 内置依赖/运行时辅助
 │   ├── separate_stems.py         # 信号域人声/编曲分离（Demucs + HPSS 兜底 + 非 WAV 转码）
 │   ├── extract_features.py       # librosa 提特征
 │   ├── transcribe_stems.py       # CQT 转录 + 鼓分类 + CREPE 人声音高线
 │   ├── perceptual_filter.py      # 符号域旋律-伴奏分层（去噪 + 三层分离，纯 numpy）
 │   ├── split_arrangement.py      # other → 主旋律 / 和声Pad（调用 perceptual_filter）
 │   ├── style_report.py           # 风格报告（数值版）
+│   ├── timbre_analysis.py        # 音色分析报告（全曲 + 分轨）
 │   ├── instrument_map.py         # 乐器【类型】标注
 │   ├── vocal_track_sv.py         # 人声参考包（SV）
 │   ├── build_fingerprint.py      # 作者风格指纹聚合
-│   └── package_output.py         # 合并多轨 MIDI + 导入说明
+│   ├── package_output.py         # 合并多轨 MIDI + 导入说明
+│   ├── notes_io.py / notes_json.py # 每轨 notes.json（起止时间/音高/力度/置信度）
+│   ├── section_summary.py        # 段落和弦/鼓型/织体摘要 + 音频叙事
+│   ├── install_skill_deps.py     # 内置依赖安装器
+│   └── skill_runtime.py          # 优先使用 .skill-deps 运行环境
 ├── references/                   # 知识库
 │   ├── analysis_framework.md     # 风格拆析维度与方法
 │   ├── instrument_types.md       # 乐器【类型】库（按 genre）
@@ -40,6 +45,13 @@ music-style-deconstructor/
 
 ```bash
 pip install demucs basic-pitch librosa scipy pretty_midi numpy
+```
+
+skill 已内置依赖安装器，推荐优先使用：
+
+```bash
+python scripts/install_skill_deps.py            # 安装核心依赖到 .skill-deps
+python scripts/install_skill_deps.py --full     # 额外安装 demucs/basic-pitch/torchcrepe
 ```
 
 - **demucs**：stem 分离，首次运行自动下载 `htdemucs` 模型（约数百 MB）。失败时自动退回 `librosa` HPSS 兜底分离。
@@ -76,6 +88,13 @@ python scripts/instrument_map.py features.json midi/ --out INSTRUMENT_MAP.md --g
 # 6. 风格报告
 python scripts/style_report.py features.json --out STYLE_REPORT.md --drums midi_raw/drums.mid
 
+# 6.5 段落摘要 + 音频叙事（建议同时传入 midi_raw/ 与 midi/）
+python scripts/section_summary.py features.json \
+    --midi midi_raw/ --midi midi/ --out SECTION_SUMMARY.md
+
+# 6.6 音色分析（全曲 + 各 stem 的亮度/平坦度/MFCC/音色标签）
+python scripts/timbre_analysis.py features.json --out TIMBRE_REPORT.md
+
 # 7. 人声参考包（SV）
 python scripts/vocal_track_sv.py stems/vocals.wav --out vocal/ --style cn
 
@@ -85,7 +104,7 @@ python scripts/package_output.py midi/ vocal/vocal_melody.mid \
 ```
 
 完成后，`output/` 含 `mysong_multitrack.mid` 与 `README_导入FLStudio.md`，  
-  `vocal/` 含人声参考包。
+  `notes.json`（每轨音符的起止时间/音高/力度/置信度），`SECTION_SUMMARY.md` 与 `AUDIO_NARRATIVE.md`（段落摘要和音频叙事），`TIMBRE_REPORT.md`（音色分析），`vocal/` 含人声参考包。
 
 ## 四、作者风格指纹模式（增强）
 
