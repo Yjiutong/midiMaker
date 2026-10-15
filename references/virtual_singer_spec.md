@@ -58,18 +58,15 @@
 
 ## 四、测试样本
 
-- 仓库 `samples/virtual_singer/utau_seiren_daisy_bell.wav` 是公开许可的 UTAU 虚拟歌姬 demo。
-- 该样本用于单独验证人声轨特化；完整多轨歌曲仍需用户提供或通过公开许可源补充。
-- `assets/virtual_singer_local_sources.json` 记录了本地 23 首虚拟歌姬 MP3（洛天依、初音ミク、星尘、诗岸等），可直接作为特化训练/验证清单。
+- `assets/virtual_singer_sources.json` 提供一个公开许可的 UTAU 虚拟歌姬 demo 链接（`Seiren - Daisy Bell`）。
+- 可用 `scripts/fetch_virtual_singer_samples.py` 拉取该样本到本地临时目录验证人声轨特化。
+- 完整多轨虚拟歌姬歌曲需用户自行准备或通过公开许可源补充。
 
-## 五、模型友好输出与本地多轮测试
+## 五、模型友好输出
 
 - 非多模态模型无法直接读取音频，因此管线的最终落点不只是 MIDI：
   - `notes.json`：每轨音符带起止时间、音高、力度、置信度。
   - `SECTION_SUMMARY.md/json`：每段落的和弦 / 鼓型 / 织体摘要 + 每 stem 频谱特征。
   - `AUDIO_NARRATIVE.md`：用一两句中文概括前奏/主歌/副歌/鼓组变化，供模型快速阅读。
   - `TIMBRE_REPORT.md/json`：全曲与每 stem 的音色标签、亮度、平坦度、MFCC 与频谱对比。
-- 本地虚拟歌姬 MP3 多轮测试产物放在 `samples/testing/`：
-  - `round1_曲折表火花`、`round2_落花后日谈`、`round3_权御天下`
-  - 每轮包含 `features.json`、`notes.json`、`SECTION_SUMMARY.md/json`、`AUDIO_NARRATIVE.md`、`STYLE_REPORT.md`、`TIMBRE_REPORT.md/json`。
-- 当前测试基于 HPSS 兜底分离；若安装 `demucs` 后可换真实 4-stem 再次对比，`drums`/`other` 的鼓分类和织体摘要质量会更高。
+- 当前默认测试路径基于 HPSS 兜底分离；若安装 `demucs` 后可换真实 4-stem 再次对比。

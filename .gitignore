@@ -1,9 +1,15 @@
 .skill-deps/
+.workbuddy/
 __pycache__/
 *.py[cod]
 pip-*/
 .pytest_cache/
 .venv/
+
+# test/sample outputs fetched by scripts (not meant to be committed)
+/samples/testing/
+/samples/virtual_singer/
+/output/
 
 # generated analysis outputs at repo root
 /features.json
