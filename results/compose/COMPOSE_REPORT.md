@@ -1,6 +1,6 @@
 # 风格化 MIDI 生成报告
 
-- 名称：seiren_style_demo
+- 名称：vocal_style_demo
 - 调性：F major
 - BPM：152.0
 - 小节：32（预计 50 秒）

@@ -58,8 +58,8 @@
 
 ## 四、测试样本
 
-- `assets/virtual_singer_sources.json` 提供一个公开许可的 UTAU 虚拟歌姬 demo 链接（`Seiren - Daisy Bell`）。
-- 可用 `scripts/fetch_virtual_singer_samples.py` 拉取该样本到本地临时目录验证人声轨特化。
+- `assets/virtual_singer_sources.json`（本地留存，不进 git）提供若干公开许可的虚拟歌姬 demo 链接。
+- 可用 `scripts/fetch_virtual_singer_samples.py` 拉取样本到本地临时目录验证人声轨特化。
 - 完整多轨虚拟歌姬歌曲需用户自行准备或通过公开许可源补充。
 
 ## 五、模型友好输出

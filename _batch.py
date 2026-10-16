@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""一次性批量跑 vocal_track_sv --virtual-singer 并汇总（非 skill 正式脚本）。"""
+"""一次性批量跑 vocal_track_sv 提取人声参考线并汇总（非 skill 正式脚本）。"""
 import subprocess, re, glob
 from pathlib import Path
 
@@ -46,12 +46,11 @@ for wav in samples:
 
 summary = ROOT / "results" / "SUMMARY.md"
 with open(summary, "w", encoding="utf-8") as f:
-    f.write("# 虚拟歌姬样本分析汇总（多轮训练 · 第 1 轮）\n\n")
-    f.write(f"共处理 **{len(rows)}** 个样本（CV 单音 + 1 首整曲 demo）。\n\n")
+    f.write("# 人声参考线分析汇总（多轮训练 · 第 1 轮）\n\n")
+    f.write(f"共处理 **{len(rows)}** 个人声样本（单音参考线 + 1 首整曲）。\n\n")
     f.write("每个样本的产物在 `results/vocal/<样本名>/`：\n")
     f.write("- `vocal_melody.mid`：人声参考唱线（音高轮廓）\n")
-    f.write("- `lyrics_placeholder.txt`：按乐句切分的歌词占位\n")
-    f.write("- `sv_recommendation.md`：检测音域 + SV 声库类型建议\n\n")
+    f.write("- `lyrics_placeholder.txt`：按乐句切分的歌词占位\n\n")
     f.write("| 样本 | 音高事件数 | 检测音域 |\n|---|---|---|\n")
     for stem, n, rng in rows:
         f.write(f"| {stem} | {n} | {rng} |\n")

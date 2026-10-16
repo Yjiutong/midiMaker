@@ -1,45 +1,44 @@
-# 虚拟歌姬样本分析汇总（多轮训练 · 第 1 轮）
+# 人声参考线分析汇总（多轮训练 · 第 1 轮）
 
-共处理 **34** 个样本（CV 单音 + 1 首整曲 demo）。
+共处理 **34** 个人声样本（单音参考线 + 1 首整曲）。
 
 每个样本的产物在 `results/vocal/<样本名>/`：
 - `vocal_melody.mid`：人声参考唱线（音高轮廓）
 - `lyrics_placeholder.txt`：按乐句切分的歌词占位
-- `sv_recommendation.md`：检测音域 + SV 声库类型建议
 
 | 样本 | 音高事件数 | 检测音域 |
 |---|---|---|
-| hvuv23544_a | 1 | A4-A4 |
-| hvuv23544_ba | 1 | A4-A4 |
-| hvuv23544_bo | 1 | A4-A4 |
-| hvuv23544_chi | 1 | A4-A4 |
-| hvuv23544_e | 1 | A4-A4 |
-| hvuv23544_ga | 1 | A4-A4 |
-| hvuv23544_go | 1 | A4-A4 |
-| hvuv23544_ha | 1 | A4-A4 |
-| hvuv23544_ho | 1 | A4-A4 |
-| hvuv23544_i | 1 | A4-A4 |
-| hvuv23544_ji | 1 | A4-A4 |
-| hvuv23544_ka | 1 | A4-A4 |
-| hvuv23544_ko | 1 | A4-A4 |
-| hvuv23544_ku | 1 | A4-A4 |
-| hvuv23544_kya | 1 | A4-A4 |
-| hvuv23544_ma | 1 | A4-A4 |
-| hvuv23544_mo | 1 | A4-A4 |
-| hvuv23544_mya | 1 | A4-A4 |
-| hvuv23544_n | 1 | A4-A4 |
-| hvuv23544_na | 1 | A4-A4 |
-| hvuv23544_no | 1 | A4-A4 |
-| hvuv23544_o | 1 | A4-A4 |
-| hvuv23544_pa | 1 | A4-A4 |
-| hvuv23544_po | 1 | A4-A4 |
-| hvuv23544_ra | 1 | A4-A4 |
-| hvuv23544_ro | 1 | A4-A4 |
-| hvuv23544_sa | 1 | A4-A4 |
-| hvuv23544_shi | 1 | A4-A4 |
-| hvuv23544_so | 1 | A4-A4 |
-| hvuv23544_ta | 1 | A4-A4 |
-| hvuv23544_to | 1 | A4-A4 |
-| hvuv23544_tsu | 1 | A4-A4 |
-| hvuv23544_u | 1 | A4-A4 |
-| utau_seiren_daisy_bell | 45 | C3-D4 |
+| sample_001 | 1 | A4-A4 |
+| sample_002 | 1 | A4-A4 |
+| sample_003 | 1 | A4-A4 |
+| sample_004 | 1 | A4-A4 |
+| sample_005 | 1 | A4-A4 |
+| sample_006 | 1 | A4-A4 |
+| sample_007 | 1 | A4-A4 |
+| sample_008 | 1 | A4-A4 |
+| sample_009 | 1 | A4-A4 |
+| sample_010 | 1 | A4-A4 |
+| sample_011 | 1 | A4-A4 |
+| sample_012 | 1 | A4-A4 |
+| sample_013 | 1 | A4-A4 |
+| sample_014 | 1 | A4-A4 |
+| sample_015 | 1 | A4-A4 |
+| sample_016 | 1 | A4-A4 |
+| sample_017 | 1 | A4-A4 |
+| sample_018 | 1 | A4-A4 |
+| sample_019 | 1 | A4-A4 |
+| sample_020 | 1 | A4-A4 |
+| sample_021 | 1 | A4-A4 |
+| sample_022 | 1 | A4-A4 |
+| sample_023 | 1 | A4-A4 |
+| sample_024 | 1 | A4-A4 |
+| sample_025 | 1 | A4-A4 |
+| sample_026 | 1 | A4-A4 |
+| sample_027 | 1 | A4-A4 |
+| sample_028 | 1 | A4-A4 |
+| sample_029 | 1 | A4-A4 |
+| sample_030 | 1 | A4-A4 |
+| sample_031 | 1 | A4-A4 |
+| sample_032 | 1 | A4-A4 |
+| sample_033 | 1 | A4-A4 |
+| sample_034 | 45 | C3-D4 |

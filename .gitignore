@@ -7,8 +7,10 @@ pip-*/
 .venv/
 
 # ---- 训练素材：绝不递交 git ----
-# 拉取的虚拟歌姬样本（raw wav 训练/验证素材）一律忽略
+# 拉取的外部样本（raw wav 训练/验证素材）一律忽略
 /samples/
+# 数据集来源/许可证清单（含外部链接，仅本地留存，不发布）
+assets/virtual_singer_sources.json
 # 管线中间产物（stems / midi_raw / 临时 output）忽略
 /output/
 
