@@ -25,21 +25,26 @@
 
 ## 复现方式
 ```bash
-# 依赖（安装到 .skill-deps，不进 git）
-python scripts/install_skill_deps.py --core
+# 依赖（安装到 skill 内部 .skill-deps，不进 git）
+cd skills/music-style-deconstructor
+python scripts/install_skill_deps.py
+
+# 回仓库根目录
+cd ../..
 
 # 第 1 轮：批量提取全部人声样本参考线
 python _batch.py
 
-# 第 2 轮：整曲解构 + 指纹
-python scripts/extract_features.py samples/vocal/<整曲样本>.wav \
-    --virtual-singer --out results/songs/song_01/features.json
-python scripts/style_report.py results/songs/song_01/features.json \
-    --out results/songs/song_01/STYLE_REPORT.md --virtual-singer
-python scripts/build_fingerprint.py results/songs/song_01/features.json \
-    --out results/fingerprint/song_01_author.json
+# 第 2 轮：整曲解构 + 指纹（再次进入 skill 目录执行）
+cd skills/music-style-deconstructor
+python scripts/extract_features.py ../../samples/vocal/<整曲样本>.wav \
+    --virtual-singer --out ../../results/songs/song_01/features.json
+python scripts/style_report.py ../../results/songs/song_01/features.json \
+    --out ../../results/songs/song_01/STYLE_REPORT.md --virtual-singer
+python scripts/build_fingerprint.py ../../results/songs/song_01/features.json \
+    --out ../../results/fingerprint/song_01_author.json
 
 # 第 3 轮：风格化作曲
-python scripts/compose_from_fingerprint.py results/fingerprint/song_01_author.json \
-    --out results/compose --name vocal_style_demo --bars 32 --seed 42
+python scripts/compose_from_fingerprint.py ../../results/fingerprint/song_01_author.json \
+    --out ../../results/compose --name vocal_style_demo --bars 32 --seed 42
 ```

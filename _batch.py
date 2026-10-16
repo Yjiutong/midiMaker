@@ -5,7 +5,8 @@ from pathlib import Path
 
 PY = r"C:/Users/19105/.workbuddy/binaries/python/versions/3.13.12/python.exe"
 ROOT = Path(r"E:/midiMaker")
-VENV_SITE = ROOT / ".skill-deps" / "Lib" / "site-packages"
+SKILL = ROOT / "skills" / "music-style-deconstructor"
+VENV_SITE = SKILL / ".skill-deps" / "Lib" / "site-packages"
 
 samples = sorted(glob.glob(str(ROOT / "samples" / "virtual_singer" / "*.wav")))
 rows = []
@@ -16,7 +17,7 @@ for wav in samples:
     out.mkdir(parents=True, exist_ok=True)
     try:
         r = subprocess.run(
-            [PY, "scripts/vocal_track_sv.py", str(wav),
+            [PY, str(SKILL / "scripts/vocal_track_sv.py"), str(wav),
              "--out", str(out), "--virtual-singer"],
             cwd=str(ROOT), capture_output=True, text=True, timeout=300)
         msg = (r.stdout or r.stderr).strip().splitlines()

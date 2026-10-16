@@ -1,183 +1,117 @@
-# music-style-deconstructor
+# midiMaker
 
-把一首音频自动拆成编曲元素分轨和多轨 MIDI，并生成风格拆析、段落摘要、音色分析、人声参考包。
+这是一个可以被 Claude 对话安装的 Codex skill 仓库，仓库里包含一个可安装的 skill：
 
-适合用于：
-- 扒带 / 编曲参考
-- FL Studio 多轨 MIDI 导入
-- Synthesizer V 虚拟歌姬人声参考
-- 对一首或多首参考曲提炼作者风格指纹
+`music-style-deconstructor`：给定音频，分离编曲元素、提取风格指纹、生成拆分乐器 MIDI，并支持基于提示词微调风格参数。
 
-> 完整 skill 工作流见 [SKILL.md](./SKILL.md)，算法设计见 [references](./references/music-style-deconstructor_design.md)。
+Skill 主体在 [skills/music-style-deconstructor](./skills/music-style-deconstructor)，其中 [SKILL.md](./skills/music-style-deconstructor/SKILL.md) 是技能入口。
 
-## 功能
+## 一键安装
 
-- 音频分轨：`vocals / drums / bass / other`
-- 特征提取：BPM、调性、和弦、段落、频谱、音色
-- 多轨转录：贝斯、鼓、主旋律、和声 Pad
-- 逐轨 `notes.json`：起止时间、音高、力度、置信度
-- 段落摘要与音频叙事：和弦、鼓型、织体、频谱、音色
-- 作者风格指纹：多首参考曲聚合
-- 风格化 MIDI 生成：基于作者指纹生成原创 melody / pad / bass / drums 分轨
-- 虚拟歌姬特化：人声音高线、音节密度、SV 参考包
+### 在 Codex 中安装
 
-## 目录结构
+在 Codex 对话里直接说：
+
+```text
+安装 https://github.com/Yjiutong/midiMaker 的 music-style-deconstructor skill
+```
+
+也可以直接说：
+
+```text
+安装 https://github.com/Yjiutong/midiMaker
+```
+
+Codex 会读取 `skills/README.md`，自动选择 `skills/music-style-deconstructor` 完成安装。
+
+等价命令（如果你本机已安装 Codex 自带 skill-installer）：
+
+```bash
+python <CODEX_HOME>/skills/.system/skill-installer/scripts/install-skill-from-github.py \
+    --repo Yjiutong/midiMaker \
+    --path skills/music-style-deconstructor
+```
+
+安装后会复制到：
+
+```text
+$CODEX_HOME/skills/music-style-deconstructor/
+```
+
+### 命令行一键安装
+
+真实一行命令（不需先 clone 本仓库）：
+
+Windows PowerShell：
+
+```powershell
+irm https://raw.githubusercontent.com/Yjiutong/midiMaker/main/install.ps1 | iex
+```
+
+macOS / Linux：
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Yjiutong/midiMaker/main/install.sh)
+```
+
+这条命令会从 GitHub 拉取安装脚本，sparse checkout 对应 skill 目录，复制到 `$CODEX_HOME/skills/music-style-deconstructor`，并自动安装核心依赖。
+
+也可以先 clone 再运行安装脚本：
+
+Windows PowerShell：
+
+```powershell
+git clone --depth 1 https://github.com/Yjiutong/midiMaker.git midiMaker
+cd midiMaker
+.\install.ps1
+```
+
+macOS / Linux：
+
+```bash
+git clone --depth 1 https://github.com/Yjiutong/midiMaker.git midiMaker
+cd midiMaker
+INSTALL_DEPS=1 bash install.sh
+```
+
+安装脚本会用 git sparse checkout 只拉取 `skills/music-style-deconstructor`，复制到 Codex skills 目录，并可选安装核心依赖。如需完整重型依赖（demucs / basic-pitch / torchcrepe），安装后再运行：
+
+```bash
+cd $CODEX_HOME/skills/music-style-deconstructor
+python scripts/install_skill_deps.py --full
+```
+
+## 仓库结构
 
 ```text
 .
-├── SKILL.md                    # skill 主文档
-├── README.md
-├── scripts/
-│   ├── separate_stems.py       # Demucs / HPSS 分轨
-│   ├── extract_features.py     # 全局特征与音色特征
-│   ├── transcribe_stems.py     # stem -> MIDI + 鼓分类 + 人声音高
-│   ├── split_arrangement.py    # other -> 主旋律 / Pad
-│   ├── style_report.py         # 风格拆析报告
-│   ├── section_summary.py      # 段落摘要 + 音频叙事
-│   ├── timbre_analysis.py      # 音色分析报告
-│   ├── vocal_track_sv.py       # Synthesizer V 人声参考包
-│   ├── build_fingerprint.py    # 作者风格指纹
-│   ├── compose_from_fingerprint.py # 指纹 -> 原创多轨 MIDI
-│   ├── package_output.py       # 合并多轨 MIDI
-│   ├── notes_io.py             # notes.json 读写
-│   ├── notes_json.py           # 从 MIDI 目录生成 notes.json
-│   ├── fetch_virtual_singer_samples.py
-│   ├── install_skill_deps.py
-│   └── skill_runtime.py
-├── assets/
-│   ├── virtual_singer_sources.json
-│   └── lyric_template.txt
-├── references/
-│   ├── analysis_framework.md
-│   ├── transcription_algorithms.md
-│   ├── instrument_types.md
-│   ├── midi_mapping.md
-│   ├── sv_voicebank.md
-│   ├── fingerprint_framework.md
-│   ├── style_prompt_guide.md
-│   ├── virtual_singer_spec.md
-│   └── music-style-deconstructor_design.md
-└── requirements/
-    ├── core.txt
-    └── full.txt
+├── skills/
+│   └── music-style-deconstructor/
+│       ├── SKILL.md
+│       ├── scripts/
+│       ├── references/
+│       ├── assets/
+│       └── requirements/
+├── results/                  # 训练/验证结果（示例，不入 skill 本体）
+├── install.ps1               # Windows 一键安装
+├── install.sh                # macOS / Linux 一键安装
+└── README.md
 ```
 
-## 安装
+`results/` 只用于验证和复盘，不属于安装后的 skill 本体。`samples/`、`.skill-deps/`、`output/` 等本地产物不纳入 git。
 
-需要 Python 3.10+，推荐使用仓库内置依赖安装器：
+## 本地开发
+
+直接进入 skill 目录开发：
 
 ```bash
-python scripts/install_skill_deps.py            # 核心依赖
-python scripts/install_skill_deps.py --full     # 额外安装 demucs / basic-pitch / torchcrepe
+cd skills/music-style-deconstructor
+python scripts/install_skill_deps.py --full
+python scripts/separate_stems.py demo.mp3 --out output/stems
+python scripts/extract_features.py demo.mp3 --stems output/stems --out output/features.json
 ```
 
-也可以手动安装：
+## 注意
 
-```bash
-pip install demucs basic-pitch librosa scipy pretty_midi numpy
-```
-
-`demucs` 首次运行会下载神经网络模型；未安装时自动退回 HPSS 兜底分轨。
-
-## 快速开始
-
-请确认你有权分析目标音频，例如自己制作的歌曲、公开演示素材或已获得授权的曲目。
-
-```bash
-# 1. 分轨
-python scripts/separate_stems.py input.mp3 --out stems/
-
-# 2. 提取特征
-python scripts/extract_features.py input.mp3 --stems stems/ --out features.json
-
-# 3. stem 转 MIDI
-python scripts/transcribe_stems.py stems/ --out midi_raw/
-
-# 4. 拆分主旋律 / Pad
-python scripts/split_arrangement.py midi_raw/other.mid --out midi/
-
-# 5. 乐器类型标注
-python scripts/instrument_map.py features.json midi/ --out INSTRUMENT_MAP.md --genre pop
-
-# 6. 风格报告
-python scripts/style_report.py features.json --out STYLE_REPORT.md \
-    --drums midi_raw/drums.mid
-
-# 7. 段落摘要 + 音频叙事
-python scripts/section_summary.py features.json \
-    --midi midi_raw/ --midi midi/ --out SECTION_SUMMARY.md
-
-# 8. 音色分析
-python scripts/timbre_analysis.py features.json --out TIMBRE_REPORT.md
-
-# 9. SV 人声参考包
-python scripts/vocal_track_sv.py stems/vocals.wav --out vocal/
-
-# 10. 合并输出
-python scripts/package_output.py midi/ vocal/vocal_melody.mid \
-    --map INSTRUMENT_MAP.md --out output/ --name mysong
-
-# 11. （可选）基于作者风格指纹生成一首新的分轨 MIDI 草稿
-python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
-    --out output/compose/ --name new_song --bars 32 --seed 42
-
-# 也可以用提示词微调风格参数（适合 agent 接入口语化指令）
-python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
-    --prompt "更明亮、鼓更密、快一点" \
-    --out output/compose/ --name new_song --bars 32 --seed 42
-
-# agent 也可以先规范成标准 prompt 文件，再输入后续流程
-python scripts/compose_from_fingerprint.py AUTHOR_FINGERPRINT.json \
-    --prompt-file STYLE_PROMPT.md \
-    --out output/compose/ --name new_song --bars 32 --seed 42
-```
-
-生成的 `output/compose/` 包含 `melody.mid`、`pad.mid`、`bass.mid`、`drums.mid`、`notes.json`、`COMPOSE_REPORT.md`，并在使用提示词时保存 `STYLE_PROMPT.md` 作为标准 prompt 快照，可以直接拖入 FL Studio 继续编曲。该过程不读取音频，而是用指纹中的调性、BPM、和弦进行、段落比例和层次比例生成原创编曲草稿。
-
-`--prompt` 支持常见中文/英文风格词，如快慢、明亮/暗沉、鼓密/少鼓、Pad 多少；agent 应先把自然语言规范为标准 prompt，再通过 `--prompt-file` 或 `params.json` 输入，参数映射见 `references/style_prompt_guide.md`。
-
-## 虚拟歌姬特化
-
-对虚拟歌姬 / Synthesizer V / VOCALOID / UTAU 等歌曲，追加 `--virtual-singer` 参数：
-
-```bash
-python scripts/extract_features.py input.mp3 --stems stems/ --out features.json --virtual-singer
-python scripts/transcribe_stems.py stems/ --out midi_raw/ --virtual-singer
-python scripts/style_report.py features.json --out STYLE_REPORT.md --virtual-singer
-python scripts/vocal_track_sv.py stems/vocals.wav --out vocal/ --virtual-singer
-```
-
-公开 UTAU 示例可以用以下命令拉取，用于快速验证：
-
-```bash
-python scripts/fetch_virtual_singer_samples.py --out /tmp/vs_sample
-```
-
-## 输出说明
-
-```text
-output/
-├── mysong_multitrack.mid
-├── README_导入FLStudio.md
-├── features.json
-├── notes.json
-├── STYLE_REPORT.md
-├── INSTRUMENT_MAP.md
-├── SECTION_SUMMARY.md/json
-├── AUDIO_NARRATIVE.md
-├── TIMBRE_REPORT.md/json
-└── vocal/
-```
-
-所有自动分析结果仅供编曲参考，最终仍需结合听感人工修正。
-
-## 局限
-
-- 自动转录对密集织体、失真吉他、重叠人声误差明显。
-- HPSS 兜底分轨不是真实源分离，`other` 与 `vocals` 可能出现近似重复。
-- 人声音高线不识别歌词，只锚定音高与节奏骨架。
-- 请只处理你有权分析的音频，并遵守原始素材的许可要求。
-
-## License
-
-见 [LICENSE](./LICENSE)。
+- 本仓库只提交 skill 代码和验证结果，不提交原始音频样本及模型权重。
+- 生成 MIDI 用于编曲草稿，不代表音频转录结果；最终仍需人工修音和编排。
