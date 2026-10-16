@@ -6,10 +6,16 @@ pip-*/
 .pytest_cache/
 .venv/
 
-# test/sample outputs fetched by scripts (not meant to be committed)
-/samples/testing/
-/samples/virtual_singer/
+# ---- 训练素材：绝不递交 git ----
+# 拉取的虚拟歌姬样本（raw wav 训练/验证素材）一律忽略
+/samples/
+# 管线中间产物（stems / midi_raw / 临时 output）忽略
 /output/
+
+# ---- 训练后结果：可递交 ----
+# results/ 下的分析结果（音高线 MIDI / 特征 / 报告）默认纳入版本控制
+# 如需忽略某次试验，可在 results/ 内另建 .gitignore
+!/results/
 
 # generated analysis outputs at repo root
 /features.json
